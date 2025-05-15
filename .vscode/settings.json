@@ -1,0 +1,14 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.pycodestyleArgs": [
+      "--max-line-length=88"
+    ],
+    "python.linting.lintOnSave": true,
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "none",
+    "python.analysis.extraPaths": [
+      "C:\\Users\\pampam\\AppData\\Roaming\\Python\\Python312\\Scripts"
+    ]
+  }

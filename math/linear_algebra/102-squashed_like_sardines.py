@@ -3,8 +3,18 @@
 Concatenates two matrices along a specific axis
 """
 
-
 def cat_matrices(mat1, mat2, axis=0):
+    """
+    Concatenates two matrices along a specified axis.
+
+    Parameters:
+    mat1 (list): The first matrix (list of lists or deeper).
+    mat2 (list): The second matrix.
+    axis (int): The axis along which to concatenate. Defaults to 0.
+
+    Returns:
+    list or None: A new concatenated matrix if shapes are compatible; None otherwise.
+    """
     from copy import deepcopy
 
     def shape(matrix):

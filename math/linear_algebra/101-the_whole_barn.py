@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''
 This is a simple script that demonstrates the use
-of the numpy library to solve a system of linear equations. | Python | Shobi
+of the numpy library to solve a system of linear equations. | Python | PamPam
 '''
 
 

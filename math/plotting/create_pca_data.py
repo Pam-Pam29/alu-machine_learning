@@ -2,12 +2,10 @@ import numpy as np
 from sklearn import datasets
 import os
 
-# Load the iris dataset
 iris = datasets.load_iris()
-data = iris.data  # Shape: (150, 4) - Features of iris flowers
-labels = iris.target  # Shape: (150,) - Species labels (0, 1, 2)
+data = iris.data  
+labels = iris.target  
 
-# Save the data in the required format
 np.savez("pca.npz", data=data, labels=labels)
 
 print("Created pca.npz file with Iris dataset")

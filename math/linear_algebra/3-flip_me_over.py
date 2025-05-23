@@ -6,7 +6,7 @@ This module contains a function that returns a transposed matrix
 
 def matrix_transpose(matrix):
     '''
-    Returns s atransposed matrix based on the arguments given
+    Returns a transposed matrix based on the arguments given
     '''
     r = len(matrix)
     c = len(matrix[0])
@@ -16,3 +16,4 @@ def matrix_transpose(matrix):
         for j in range(c):
             transposed[j][i] = matrix[i][j]
     return transposed
+    

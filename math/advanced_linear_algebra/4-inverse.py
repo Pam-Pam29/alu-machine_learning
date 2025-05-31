@@ -23,50 +23,54 @@ def inverse(matrix):
             return None
         return [[round(1 / matrix[0][0], 1)]]
     
-    # Create an augmented matrix [A|I] using float conversion
+    # Create an augmented matrix [A|I] with high precision
     augmented = []
     for i, row in enumerate(matrix):
-        new_row = [float(x) for x in row]  # Convert to float
-        identity_part = [float(int(i == j)) for j in range(n)]
+        new_row = [float(x) for x in row]
+        identity_part = [1.0 if i == j else 0.0 for j in range(n)]
         augmented.append(new_row + identity_part)
     
     # Gaussian elimination with partial pivoting
     for i in range(n):
-        # Find pivot (row with largest absolute value in column i)
-        pivot_row = i
+        # Find the row with the largest absolute value in column i (partial pivoting)
+        max_row = i
         for k in range(i + 1, n):
-            if abs(augmented[k][i]) > abs(augmented[pivot_row][i]):
-                pivot_row = k
+            if abs(augmented[k][i]) > abs(augmented[max_row][i]):
+                max_row = k
         
-        # Check for singular matrix
-        if abs(augmented[pivot_row][i]) < 1e-14:
-            return None  # Matrix is singular
+        # Check if matrix is singular
+        if abs(augmented[max_row][i]) < 1e-12:
+            return None
         
-        # Swap rows if needed
-        if pivot_row != i:
-            augmented[i], augmented[pivot_row] = augmented[pivot_row], augmented[i]
+        # Swap rows if necessary
+        if max_row != i:
+            augmented[i], augmented[max_row] = augmented[max_row], augmented[i]
         
-        # Scale current row to make diagonal element 1
+        # Make all rows below this one 0 in current column
         pivot = augmented[i][i]
+        
+        # Scale the pivot row
         for j in range(2 * n):
             augmented[i][j] /= pivot
         
-        # Eliminate column entries above and below the pivot
+        # Eliminate all other rows
         for k in range(n):
-            if k != i and abs(augmented[k][i]) > 1e-14:
+            if k != i:
                 factor = augmented[k][i]
                 for j in range(2 * n):
                     augmented[k][j] -= factor * augmented[i][j]
     
-    # Extract inverse from the right half of the augmented matrix
+    # Extract the inverse matrix from the right side
     result = []
     for i in range(n):
         row = []
         for j in range(n, 2 * n):
             val = augmented[i][j]
-            # Clean up floating point errors
-            if abs(val) < 1e-14:
+            # Clean up floating point errors more aggressively
+            if abs(val) < 1e-15:
                 val = 0.0
+            # Apply minimal rounding to reduce floating point noise
+            val = round(val, 16)  # Round to 16 decimal places to reduce noise
             row.append(val)
         result.append(row)
     

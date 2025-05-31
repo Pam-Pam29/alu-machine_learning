@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 '''
-This script demonstrates how to calculate the
-inverse of a matrix without using the numpy library.
+This script demonstrates how to calculate the inverse of a matrix
+without using the numpy library.
 '''
 
 def inverse(matrix):
     '''
-    This function calculates the inverse of a matrix without using numpy.
-    
-    Args:
-        matrix: A list of lists representing a square matrix
-        
-    Returns:
-        list: The inverse matrix as a list of lists, or None if singular
+    This function calculates the inverse of a matrix.
     '''
     if not isinstance(matrix, list) or len(matrix) == 0 or \
        not all(isinstance(row, list) for row in matrix):
@@ -29,18 +23,16 @@ def inverse(matrix):
             return None
         return [[round(1 / matrix[0][0], 1)]]
     
-    # Create an augmented matrix [A|I] - keep original approach but fix precision
+    # Create an augmented matrix [A|I] using float conversion
     augmented = []
     for i, row in enumerate(matrix):
-        # Convert to float to ensure proper division
-        new_row = [float(x) for x in row]
-        # Add identity matrix part
-        new_row.extend([1.0 if i == j else 0.0 for j in range(n)])
-        augmented.append(new_row)
+        new_row = [float(x) for x in row]  # Convert to float
+        identity_part = [float(int(i == j)) for j in range(n)]
+        augmented.append(new_row + identity_part)
     
     # Gaussian elimination with partial pivoting
     for i in range(n):
-        # Find pivot - row with largest absolute value in column i
+        # Find pivot (row with largest absolute value in column i)
         pivot_row = i
         for k in range(i + 1, n):
             if abs(augmented[k][i]) > abs(augmented[pivot_row][i]):
@@ -48,7 +40,7 @@ def inverse(matrix):
         
         # Check for singular matrix
         if abs(augmented[pivot_row][i]) < 1e-14:
-            return None
+            return None  # Matrix is singular
         
         # Swap rows if needed
         if pivot_row != i:
@@ -59,14 +51,14 @@ def inverse(matrix):
         for j in range(2 * n):
             augmented[i][j] /= pivot
         
-        # Eliminate column i in all other rows
+        # Eliminate column entries above and below the pivot
         for k in range(n):
             if k != i and abs(augmented[k][i]) > 1e-14:
                 factor = augmented[k][i]
                 for j in range(2 * n):
                     augmented[k][j] -= factor * augmented[i][j]
     
-    # Extract the inverse matrix from the right half
+    # Extract inverse from the right half of the augmented matrix
     result = []
     for i in range(n):
         row = []

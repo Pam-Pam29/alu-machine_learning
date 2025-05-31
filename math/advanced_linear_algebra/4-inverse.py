@@ -1,69 +1,53 @@
 #!/usr/bin/env python3
-'''
-This script demonstrates how to calculate the
-inverse of a matrix without using the numpy library.
-'''
+"""
+A function to calculate the inverse of a matrix
+"""
 
 
 def inverse(matrix):
-    '''
-    This function calculates the inverse of a matrix.
-    '''
-    if not isinstance(matrix, list) or len(matrix) == 0 or \
-       not all(isinstance(row, list) for row in matrix):
+    """
+    returns a matrix
+    """
+    if not isinstance(matrix, list) or len(matrix) == 0\
+       or not all(isinstance(row, list) for row in matrix):
         raise TypeError("matrix must be a list of lists")
 
-    # Check if matrix is square
+    # Check if matrix is squares
     n = len(matrix)
     if any(len(row) != n for row in matrix):
         raise ValueError("matrix must be a non-empty square matrix")
 
-    # Special case for 1x1 matrix
-    if n == 1:
-        if matrix[0][0] == 0:
-            return None
-        return [[round(1 / matrix[0][0], 1)]]
+    def submatrix(mat, i, j):
+        return [row[:j] + row[j+1:] for row in (mat[:i] + mat[i+1:])]
 
-    # Create an augmented matrix [A|I]
-    augmented = [row + [int(i == j) for j in range(n)]
-                 for i, row in enumerate(matrix)]
+    def determinant(mat):
+        if len(mat) == 1:
+            return mat[0][0]
+        if len(mat) == 2:
+            return mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]
+        det = 0
+        for j in range(len(mat)):
+            det += ((-1) ** j) * mat[0][j] * determinant(submatrix(mat, 0, j))
+        return det
 
-    # Gaussian elimination
-    for i in range(n):
-        # Find pivot
-        pivot = max(range(i, n), key=lambda k: abs(augmented[k][i]))
-        if augmented[pivot][i] == 0:
-            return None  # Matrix is singular
+    def adjugate(mat):
+        if n == 1:
+            return [[1]]
+        cofactor_matrix = []
+        for i in range(n):
+            cofactor_row = []
+            for j in range(n):
+                sign = (-1) ** (i + j)
+                minor = determinant(submatrix(mat, i, j))
+                cofactor_row.append(sign * minor)
+            cofactor_matrix.append(cofactor_row)
+        return [[cofactor_matrix[j][i] for j in range(n)] for i in range(n)]
 
-        # Swap rows
-        augmented[i], augmented[pivot] = augmented[pivot], augmented[i]
+    det = determinant(matrix)
+    if det == 0:
+        return None  # Matrix is singular, inverse doesn't exist
 
-        # Scale row
-        scale = augmented[i][i]
-        for j in range(i, 2*n):
-            augmented[i][j] /= scale
+    adj = adjugate(matrix)
+    inverse_matrix = [[adj[i][j] / det for j in range(n)] for i in range(n)]
 
-        # Eliminate
-        for k in range(n):
-            if k != i:
-                factor = augmented[k][i]
-                for j in range(i, 2*n):
-                    augmented[k][j] -= factor * augmented[i][j]
-
-    # Extract inverse from the right half of the augmented matrix
-    inverse = [row[n:] for row in augmented]
-
-    # Format the output to match the desired precision
-    formatted_inverse = []
-    for row in inverse:
-        formatted_row = []
-        for elem in row:
-            if abs(elem) < 1e-10:
-                formatted_row.append(0.0)
-            elif abs(elem - round(elem, 1)) < 1e-10:
-                formatted_row.append(round(elem, 1))
-            else:
-                formatted_row.append(elem)
-        formatted_inverse.append(formatted_row)
-
-    return formatted_inverse
+    return inverse_matrix

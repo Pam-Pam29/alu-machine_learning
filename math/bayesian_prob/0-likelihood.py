@@ -1,4 +1,4 @@
-/usr/bin/env python3
+#!/usr/bin/env python3
 '''
 Calculates the likelihood of obtaining this data
 given various hypothetical probabilities

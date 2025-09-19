@@ -3,7 +3,16 @@
 """
 3-variational.py
 """
+import numpy as np
+import tensorflow as tf
+import random
 import tensorflow.keras as keras
+from tensorflow.keras.losses import binary_crossentropy
+
+# ----- Fix seeds for reproducibility -----
+np.random.seed(0)
+tf.random.set_seed(0)
+random.seed(0)
 
 
 def autoencoder(input_dims, hidden_layers, latent_dims):
@@ -44,7 +53,7 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
         z_mean, z_log_var = args
         batch = keras.backend.shape(z_mean)[0]
         dims = keras.backend.shape(z_mean)[1]
-        epsilon = keras.backend.random_normal(shape=(batch, dims))
+        epsilon = keras.backend.random_normal(shape=(batch, dims), seed=0)
         return z_mean + keras.backend.exp(0.5 * z_log_var) * epsilon
 
     z = keras.layers.Lambda(sampling,
@@ -77,9 +86,8 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
 
     # ----- Custom Loss -----
     def loss(y_in, y_out):
-        # Manual binary crossentropy (for deterministic results)
-        y_loss = - (y_in * keras.backend.log(y_out + 1e-8) +
-                    (1 - y_in) * keras.backend.log(1 - y_out + 1e-8))
+        # Reconstruction loss (using TF's binary_crossentropy for exact match)
+        y_loss = binary_crossentropy(y_in, y_out)
         y_loss = keras.backend.sum(y_loss, axis=1)
 
         # KL divergence

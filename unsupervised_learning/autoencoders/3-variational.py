@@ -63,9 +63,9 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
         """variational autoencoder loss function"""
         xent_loss = keras.backend.binary_crossentropy(x, x_decoded_mean)
         xent_loss = keras.backend.sum(xent_loss, axis=1)
-        kl_loss = -0.5 * keras.backend.mean(
-            1 + z_log_sigma - keras.backend.square(z_mean) -
-            keras.backend.exp(z_log_sigma), axis=-1)
+        kl_loss = -0.5 * keras.backend.sum(1 + z_log_sigma - 
+                                          keras.backend.square(z_mean) - 
+                                          keras.backend.exp(z_log_sigma), axis=-1)
         return xent_loss + kl_loss
 
     auto.compile(optimizer='adam', loss=vae_loss)

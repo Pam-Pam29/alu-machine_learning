@@ -2,6 +2,7 @@
 """Creating a variational autoencoder"""
 
 import tensorflow.keras as keras
+import tensorflow as tf
 
 
 def autoencoder(input_dims, hidden_layers, latent_dims):
@@ -19,6 +20,9 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
     Return: encoder, decoder, auto
 
     """
+    # Set random seed for reproducibility
+    tf.random.set_seed(42)
+    
     input_encoder = keras.Input(shape=(input_dims, ))
     input_decoder = keras.Input(shape=(latent_dims, ))
 
@@ -61,10 +65,9 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
 
     def vae_loss(x, x_decoded_mean):
         """variational autoencoder loss function"""
-
         xent_loss = keras.backend.binary_crossentropy(x, x_decoded_mean)
         xent_loss = keras.backend.sum(xent_loss, axis=1)
-        kl_loss = - 0.5 * keras.backend.mean(
+        kl_loss = -0.5 * keras.backend.mean(
             1 + z_log_sigma - keras.backend.square(z_mean) - keras.backend.exp(
                 z_log_sigma), axis=-1)
         return xent_loss + kl_loss

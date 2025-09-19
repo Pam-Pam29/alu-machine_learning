@@ -47,11 +47,11 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
 
     # Sample z from latent distribution
     z = keras.layers.Lambda(sampling,
-                           output_shape=(latent_dims,))([z_mean, z_log_var])
+                            output_shape=(latent_dims,))([z_mean, z_log_var])
 
     # Create encoder model
     encoder = keras.Model(encoder_input, [z, z_mean, z_log_var],
-                         name='encoder')
+                          name='encoder')
 
     # Decoder
     latent_inputs = keras.Input(shape=(latent_dims,), name='z_sampling')
@@ -77,7 +77,7 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
         divergence"""
         # Reconstruction loss
         reconstruction_loss = keras.losses.binary_crossentropy(y_true,
-                                                              y_pred)
+                                                               y_pred)
         reconstruction_loss *= input_dims
 
         # KL divergence loss

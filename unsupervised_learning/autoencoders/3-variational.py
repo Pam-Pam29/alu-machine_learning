@@ -75,10 +75,11 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
     autoencoder = keras.models.Model(inputs=input_encoder,
                                      outputs=out_decoder)
 
-    # ----- Loss -----
+    # ----- Custom Loss -----
     def loss(y_in, y_out):
-        # Reconstruction loss
-        y_loss = keras.backend.binary_crossentropy(y_in, y_out)
+        # Manual binary crossentropy (for deterministic results)
+        y_loss = - (y_in * keras.backend.log(y_out + 1e-8) +
+                    (1 - y_in) * keras.backend.log(1 - y_out + 1e-8))
         y_loss = keras.backend.sum(y_loss, axis=1)
 
         # KL divergence

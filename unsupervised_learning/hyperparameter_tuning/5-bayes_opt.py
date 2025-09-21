@@ -124,22 +124,25 @@ class BayesianOptimization():
             - Y_opt is a numpy.ndarray of shape (1,)
                 representing the optimal function value
         """
+
+        X_aux = []
+
         for i in range(iterations):
-            X_next, EI = self.acquisition()
-
-            # Check if this point was already sampled by comparing with
-            # all points currently in the GP
-            already_sampled = False
-            for j in range(len(self.gp.X)):
-                if np.allclose(self.gp.X[j], X_next, rtol=1e-9):
-                    already_sampled = True
+            X_opt, EI = self.acquisition()
+            
+            # Check if this X_opt is already in our list of sampled points
+            found_duplicate = False
+            for x in X_aux:
+                if np.allclose(X_opt, x):
+                    found_duplicate = True
                     break
-
-            if already_sampled:
+            
+            if found_duplicate:
                 break
-
-            Y_next = self.f(X_next)
-            self.gp.update(X_next, Y_next)
+                
+            Y_opt = self.f(X_opt)
+            self.gp.update(X_opt, Y_opt)
+            X_aux.append(X_opt)
 
         if self.minimize is True:
             idx = np.argmin(self.gp.Y)

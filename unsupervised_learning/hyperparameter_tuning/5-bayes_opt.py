@@ -1,87 +1,95 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-5. Bayesian Optimization
+5-bayes_opt.py
 """
 import numpy as np
 from scipy.stats import norm
 GP = __import__('2-gp').GaussianProcess
 
 
-class BayesianOptimization:
+class BayesianOptimization():
     """
-    Performs Bayesian optimization on a noiseless 1D Gaussian process
+    Performs Bayesian optimization on a noiseless 1D Gaussian process.
     """
 
-    def __init__(self, f, X_init, Y_init, bounds, ac_samples, l=1,
-                 sigma_f=1, xsi=0.01, minimize=True):
+    def __init__(self, f, X_init, Y_init, bounds,
+                 ac_samples, l=1, sigma_f=1, xsi=0.01, minimize=True):
         """
-        Class constructor
-        Args:
-            f: black-box function to be optimized
-            X_init: np.ndarray - (t, 1) - inputs already sampled with the
-                black-box function
-            Y_init: np.ndarray - (t, 1) - outputs of the black-box function
-                for each input in X_init
-            bounds: tuple (min, max) - bounds of the space in which to look
-                for the optimal point
-            ac_samples: number of samples that should be analyzed during
-                acquisition
-            l: length parameter for the kernel
-            sigma_f: standard deviation given to the output of the
-                black-box function
-            xsi: exploration-exploitation factor for acquisition
-            minimize: bool determining whether optimization should be
-                performed for minimization (True) or maximization (False)
-        """
-        MIN, MAX = bounds
+        Class constructor.
 
+        Arguments:
+            - f: black-box function to optimize
+            - X_init: numpy.ndarray (t,1) of initial input samples
+            - Y_init: numpy.ndarray (t,1) of initial output samples
+            - bounds: tuple (min, max) of search space
+            - ac_samples: number of samples for acquisition
+            - l: length parameter for kernel
+            - sigma_f: standard deviation of outputs
+            - xsi: exploration-exploitation factor
+            - minimize: True to minimize, False to maximize
+        """
         self.f = f
-        self.gp = GP(X_init, Y_init, l=l, sigma_f=sigma_f)
-        self.X_s = np.linspace(MIN, MAX, num=ac_samples)[..., np.newaxis]
+        self.gp = GP(X_init, Y_init, l, sigma_f)
+        X_s = np.linspace(bounds[0], bounds[1], num=ac_samples)
+        self.X_s = X_s.reshape(-1, 1)
         self.xsi = xsi
         self.minimize = minimize
 
     def acquisition(self):
         """
-        Calculates the next best sample location
-        Uses the Expected Improvement acquisition function
-        Returns: X_next, EI
+        Calculates the next best sample using Expected Improvement.
+
+        Returns:
+            X_next: numpy.ndarray of shape (1,)
+            EI: numpy.ndarray of shape (ac_samples,)
         """
-        mu, _ = self.gp.predict(self.gp.X)
-        sample_mu, sigma = self.gp.predict(self.X_s)
+        mu_sample, sigma_sample = self.gp.predict(self.X_s)
 
         if self.minimize:
-            opt_mu = np.min(mu)
+            Y_sample = np.min(self.gp.Y)
+            imp = Y_sample - mu_sample - self.xsi
         else:
-            opt_mu = np.max(mu)
+            Y_sample = np.max(self.gp.Y)
+            imp = mu_sample - Y_sample - self.xsi
 
-        imp = opt_mu - sample_mu - self.xsi
-        Z = imp / sigma
-        EI = ((imp * norm.cdf(Z)) + (sigma * norm.pdf(Z)))
-        EI[sigma == 0.0] = 0.0
+        with np.errstate(divide='ignore'):
+            Z = imp / sigma_sample
+            EI = (imp * norm.cdf(Z)) + (sigma_sample * norm.pdf(Z))
+            EI[sigma_sample == 0.0] = 0.0
+
+        # Mask EI at already sampled points
+        for i, x in enumerate(self.X_s):
+            if np.any(np.isclose(x, self.gp.X)):
+                EI[i] = -np.inf
 
         X_next = self.X_s[np.argmax(EI)]
-
-        return X_next, np.array(EI)
+        return X_next, EI
 
     def optimize(self, iterations=100):
         """
-        Optimizes the black-box function
-        Args:
-            iterations: maximum number of iterations to perform
+        Optimizes the black-box function.
 
-        Returns: X_opt, Y_opt
+        Arguments:
+            iterations: maximum number of iterations
+
+        Returns:
+            X_opt, Y_opt
         """
-        for i in range(iterations):
+        for _ in range(iterations):
             X_next, _ = self.acquisition()
+            X_next = X_next.reshape(1, 1)
 
-            if X_next in self.gp.X:
-                break
+            # Stop if X_next has already been sampled
+            if np.any(np.isclose(X_next, self.gp.X)):
+                break  # stop immediately, do not add extra points
 
-            Y = self.f(X_next)
-            self.gp.update(X_next, Y)
+            # Evaluate function and update GP
+            Y_next = self.f(X_next)
+            self.gp.update(X_next, np.array([[Y_next]]))
 
-        idx = np.argmin(self.gp.Y)
-        X_opt = self.gp.X[idx]
-        Y_opt = np.array(self.gp.Y[idx])
+        # Return the optimal point/value
+        idx = np.argmin(self.gp.Y) if self.minimize else np.argmax(self.gp.Y)
+        X_opt = self.gp.X[idx].reshape(1,)
+        Y_opt = self.gp.Y[idx].reshape(1,)
         return X_opt, Y_opt

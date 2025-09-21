@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-5-bayes_opt
+5-bayes_opt.py
 """
 import numpy as np
 from scipy.stats import norm
 GP = __import__('2-gp').GaussianProcess
 
 
-class BayesianOptimization:
+class BayesianOptimization():
     """
     Performs Bayesian optimization on a noiseless 1D Gaussian process.
     """
@@ -16,18 +16,18 @@ class BayesianOptimization:
     def __init__(self, f, X_init, Y_init, bounds,
                  ac_samples, l=1, sigma_f=1, xsi=0.01, minimize=True):
         """
-        Class constructor
+        Class constructor.
 
         Arguments:
-            - f: the black-box function to optimize
-            - X_init: numpy.ndarray of shape (t, 1) of initial input samples
-            - Y_init: numpy.ndarray of shape (t, 1) of initial output samples
-            - bounds: tuple (min, max) of the search space
-            - ac_samples: number of samples to analyze during acquisition
-            - l: length parameter for the kernel
-            - sigma_f: standard deviation of the black-box function outputs
+            - f: black-box function to optimize
+            - X_init: numpy.ndarray (t,1) of initial input samples
+            - Y_init: numpy.ndarray (t,1) of initial output samples
+            - bounds: tuple (min, max) of search space
+            - ac_samples: number of samples for acquisition
+            - l: length parameter for kernel
+            - sigma_f: standard deviation of outputs
             - xsi: exploration-exploitation factor
-            - minimize: bool, True if minimizing, False if maximizing
+            - minimize: True to minimize, False to maximize
         """
         self.f = f
         self.gp = GP(X_init, Y_init, l, sigma_f)
@@ -38,7 +38,7 @@ class BayesianOptimization:
 
     def acquisition(self):
         """
-        Calculates the next best sample location using Expected Improvement.
+        Calculates the next best sample using Expected Improvement.
 
         Returns:
             X_next: numpy.ndarray of shape (1,)
@@ -58,7 +58,7 @@ class BayesianOptimization:
             EI = (imp * norm.cdf(Z)) + (sigma_sample * norm.pdf(Z))
             EI[sigma_sample == 0.0] = 0.0
 
-        # Mask EI at points that have already been sampled
+        # Mask EI at already sampled points
         for i, x in enumerate(self.X_s):
             if np.any(np.isclose(x, self.gp.X)):
                 EI[i] = -np.inf
@@ -71,26 +71,25 @@ class BayesianOptimization:
         Optimizes the black-box function.
 
         Arguments:
-            iterations: maximum number of iterations to perform
+            iterations: maximum number of iterations
 
         Returns:
-            X_opt: numpy.ndarray of shape (1,) representing the optimal point
-            Y_opt: numpy.ndarray of shape (1,) representing the optimal value
+            X_opt, Y_opt
         """
         for _ in range(iterations):
             X_next, _ = self.acquisition()
-            X_next_reshaped = X_next.reshape(1, 1)
+            X_next = X_next.reshape(1, 1)
 
-            # Stop early if X_next has already been sampled
-            if np.any(np.isclose(X_next_reshaped, self.gp.X)):
+            # Stop if X_next has already been sampled
+            if np.any(np.isclose(X_next, self.gp.X)):
                 break
 
-            # Evaluate function at X_next and update GP
+            # Evaluate function and update GP
             Y_next = self.f(X_next)
-            self.gp.update(X_next_reshaped, np.array([[Y_next]]))
+            self.gp.update(X_next, np.array([[Y_next]]))
 
         # Return the optimal point/value
-        idx_opt = np.argmin(self.gp.Y) if self.minimize else np.argmax(self.gp.Y)
-        X_opt = self.gp.X[idx_opt].reshape(1,)
-        Y_opt = self.gp.Y[idx_opt].reshape(1,)
+        idx = np.argmin(self.gp.Y) if self.minimize else np.argmax(self.gp.Y)
+        X_opt = self.gp.X[idx].reshape(1,)
+        Y_opt = self.gp.Y[idx].reshape(1,)
         return X_opt, Y_opt

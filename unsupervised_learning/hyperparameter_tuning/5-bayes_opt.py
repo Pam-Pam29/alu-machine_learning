@@ -128,8 +128,14 @@ class BayesianOptimization():
         for i in range(iterations):
             X_next, EI = self.acquisition()
             
-            # Check if X_next is already in self.gp.X (sampled points)
-            if np.any(np.isclose(self.gp.X, X_next, atol=1e-8)):
+            # Check if X_next is already sampled
+            duplicate = False
+            for x in self.gp.X:
+                if np.allclose(x, X_next):
+                    duplicate = True
+                    break
+            
+            if duplicate:
                 break
                 
             Y_next = self.f(X_next)

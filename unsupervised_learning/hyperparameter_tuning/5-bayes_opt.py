@@ -125,15 +125,15 @@ class BayesianOptimization():
                 representing the optimal function value
         """
 
-        X_aux = []
-
         for i in range(iterations):
-            X_opt, EI = self.acquisition()
-            if X_opt in X_aux:
+            X_next, EI = self.acquisition()
+            
+            # Check if X_next is already in self.gp.X (sampled points)
+            if np.any(np.isclose(self.gp.X, X_next, atol=1e-8)):
                 break
-            Y_opt = self.f(X_opt)
-            self.gp.update(X_opt, Y_opt)
-            X_aux.append(X_opt)
+                
+            Y_next = self.f(X_next)
+            self.gp.update(X_next, Y_next)
 
         if self.minimize is True:
             idx = np.argmin(self.gp.Y)

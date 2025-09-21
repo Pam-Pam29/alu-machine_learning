@@ -66,7 +66,7 @@ class BayesianOptimization:
 
             # Stop early if X_next has already been sampled
             if np.any(np.isclose(X_next, self.gp.X)):
-                break
+                break  # stop BEFORE adding duplicate
 
             # Evaluate function at X_next and update GP
             Y_next = self.f(X_next)

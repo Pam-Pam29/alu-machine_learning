@@ -58,6 +58,11 @@ class BayesianOptimization:
             EI = (imp * norm.cdf(Z)) + (sigma_sample * norm.pdf(Z))
             EI[sigma_sample == 0.0] = 0.0
 
+        # Mask EI at points that have already been sampled
+        for i, x in enumerate(self.X_s):
+            if np.any(np.isclose(x, self.gp.X)):
+                EI[i] = -np.inf  # prevent already sampled points
+
         X_next = self.X_s[np.argmax(EI)]
         return X_next, EI
 
@@ -74,23 +79,11 @@ class BayesianOptimization:
         """
         for _ in range(iterations):
             X_next, _ = self.acquisition()
-
-            # Reshape for proper comparison with gp.X
             X_next_reshaped = X_next.reshape(1, 1)
-
-            # Stop early if X_next has already been sampled
-            if np.any(np.isclose(X_next_reshaped, self.gp.X)):
-                break  # stop BEFORE adding duplicate
-
-            # Evaluate function at X_next and update GP
             Y_next = self.f(X_next)
             self.gp.update(X_next_reshaped, np.array([[Y_next]]))
 
-        if self.minimize:
-            idx_opt = np.argmin(self.gp.Y)
-        else:
-            idx_opt = np.argmax(self.gp.Y)
-
+        idx_opt = np.argmin(self.gp.Y) if self.minimize else np.argmax(self.gp.Y)
         X_opt = self.gp.X[idx_opt].reshape(1,)
         Y_opt = self.gp.Y[idx_opt].reshape(1,)
         return X_opt, Y_opt

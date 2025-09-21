@@ -17,6 +17,17 @@ class BayesianOptimization:
                  ac_samples, l=1, sigma_f=1, xsi=0.01, minimize=True):
         """
         Class constructor
+
+        Arguments:
+            - f: the black-box function to optimize
+            - X_init: numpy.ndarray of shape (t, 1) of initial input samples
+            - Y_init: numpy.ndarray of shape (t, 1) of initial output samples
+            - bounds: tuple (min, max) of the search space
+            - ac_samples: number of samples to analyze during acquisition
+            - l: length parameter for the kernel
+            - sigma_f: standard deviation of the black-box function outputs
+            - xsi: exploration-exploitation factor
+            - minimize: bool, True if minimizing, False if maximizing
         """
         self.f = f
         self.gp = GP(X_init, Y_init, l, sigma_f)
@@ -64,13 +75,16 @@ class BayesianOptimization:
         for _ in range(iterations):
             X_next, _ = self.acquisition()
 
+            # Reshape for proper comparison with gp.X
+            X_next_reshaped = X_next.reshape(1, 1)
+
             # Stop early if X_next has already been sampled
-            if np.any(np.isclose(X_next, self.gp.X)):
+            if np.any(np.isclose(X_next_reshaped, self.gp.X)):
                 break  # stop BEFORE adding duplicate
 
             # Evaluate function at X_next and update GP
             Y_next = self.f(X_next)
-            self.gp.update(X_next.reshape(1, 1), np.array([[Y_next]]))
+            self.gp.update(X_next_reshaped, np.array([[Y_next]]))
 
         if self.minimize:
             idx_opt = np.argmin(self.gp.Y)

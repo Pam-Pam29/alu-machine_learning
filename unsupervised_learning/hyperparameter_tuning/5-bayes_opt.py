@@ -61,7 +61,7 @@ class BayesianOptimization:
         # Mask EI at points that have already been sampled
         for i, x in enumerate(self.X_s):
             if np.any(np.isclose(x, self.gp.X)):
-                EI[i] = -np.inf  # prevent duplicates
+                EI[i] = -np.inf
 
         X_next = self.X_s[np.argmax(EI)]
         return X_next, EI
@@ -83,7 +83,7 @@ class BayesianOptimization:
 
             # Stop early if X_next has already been sampled
             if np.any(np.isclose(X_next_reshaped, self.gp.X)):
-                break  # stop BEFORE adding duplicate
+                break
 
             # Evaluate function at X_next and update GP
             Y_next = self.f(X_next)
